@@ -397,8 +397,13 @@ export function WebPlayer() {
         }
     }, [calculateReplayGain, num, player1, player2Source, player2, volume, webAudio]);
 
-    const player1Url = useSongUrl(player1, num === 1, transcode);
-    const player2Url = useSongUrl(player2, num === 2, transcode);
+    // --- PATCH START ---
+    const rawPlayer1Url = useSongUrl(player1, num === 1, transcode);
+    const rawPlayer2Url = useSongUrl(player2, num === 2, transcode);
+
+    const player1Url = getSecureUrl(rawPlayer1Url);
+    const player2Url = getSecureUrl(rawPlayer2Url);
+    // --- PATCH END ---
 
     const handlePlayer1Start = useCallback(
         async (player: ReactPlayer) => {
@@ -674,4 +679,16 @@ function linearEase(t: number): number {
 function sCurveEase(t: number): number {
     const clampedT = Math.max(0, Math.min(1, t));
     return clampedT * clampedT * (3 - 2 * clampedT);
+}
+// --- PATCH: Helper to force HTTPS on Android/Chrome ---
+function getSecureUrl(url: string | undefined): string | undefined {
+    if (
+        url &&
+        typeof url === 'string' &&
+        url.startsWith('http:') &&
+        window.location.protocol === 'https:'
+    ) {
+        return url.replace(/^http:/, 'https:');
+    }
+    return url;
 }
